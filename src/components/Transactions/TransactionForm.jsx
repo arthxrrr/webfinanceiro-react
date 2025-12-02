@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { supabase } from '../../lib/supabase'
 import { X } from 'lucide-react'
+import { useCategories } from '../../utils/hooks'
+import { api } from '../../lib/api'
+import { formatDateForInput } from '../../utils/helpers'
 
 export default function TransactionForm({ onClose, onSuccess, transactionToEdit }) {
     const { user } = useAuth()
     const [loading, setLoading] = useState(false)
-    const [categories, setCategories] = useState([])
+    const { categories } = useCategories(user)
+
     const [formData, setFormData] = useState({
         description: '',
         amount: '',
         type: 'expense',
         category_id: '',
-        date: new Date().toISOString().split('T')[0]
+        date: formatDateForInput(new Date())
     })
 
     useEffect(() => {
-        fetchCategories()
         if (transactionToEdit) {
             setFormData({
                 description: transactionToEdit.description,
@@ -28,14 +30,6 @@ export default function TransactionForm({ onClose, onSuccess, transactionToEdit 
         }
     }, [transactionToEdit])
 
-    const fetchCategories = async () => {
-        const { data } = await supabase
-            .from('categories')
-            .select('*')
-            .eq('user_id', user.id)
-        if (data) setCategories(data)
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
@@ -43,24 +37,11 @@ export default function TransactionForm({ onClose, onSuccess, transactionToEdit 
         try {
             const payload = {
                 ...formData,
-                user_id: user.id
+                id: transactionToEdit?.id
             }
 
-            let error
-            if (transactionToEdit) {
-                const result = await supabase
-                    .from('transactions')
-                    .update(payload)
-                    .eq('id', transactionToEdit.id)
-                error = result.error
-            } else {
-                const result = await supabase
-                    .from('transactions')
-                    .insert([payload])
-                error = result.error
-            }
+            await api.transactions.save(payload, user.id)
 
-            if (error) throw error
             onSuccess()
             onClose()
         } catch (error) {
@@ -73,99 +54,107 @@ export default function TransactionForm({ onClose, onSuccess, transactionToEdit 
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen px-4">
-                <div className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" onClick={onClose}></div>
+            <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div className="fixed inset-0 transition-opacity" aria-hidden="true" onClick={onClose}>
+                    <div className="absolute inset-0 bg-black opacity-75"></div>
+                </div>
 
-                <div className="relative bg-ghoul-dark rounded-lg max-w-md w-full p-6 border border-ghoul-gray shadow-2xl">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium text-ghoul-white">
-                            {transactionToEdit ? 'Editar Transação' : 'Nova Transação'}
-                        </h3>
-                        <button onClick={onClose} className="text-ghoul-muted hover:text-ghoul-white">
-                            <X className="h-6 w-6" />
-                        </button>
+                <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div className="inline-block align-bottom bg-ghoul-black rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-ghoul-gray">
+                    <div className="bg-ghoul-black px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg leading-6 font-bold text-ghoul-white">
+                                {transactionToEdit ? 'Editar Transação' : 'Nova Transação'}
+                            </h3>
+                            <button onClick={onClose} className="text-ghoul-muted hover:text-ghoul-white transition-colors">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-bold text-ghoul-muted mb-1">Descrição</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="block w-full rounded-md border-0 bg-ghoul-dark text-ghoul-white shadow-sm ring-1 ring-inset ring-ghoul-gray focus:ring-2 focus:ring-inset focus:ring-ghoul-red sm:text-sm sm:leading-6 py-2.5 px-3"
+                                    placeholder="Ex: Compras do mês"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-ghoul-muted mb-1">Valor</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    value={formData.amount}
+                                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                                    className="block w-full rounded-md border-0 bg-ghoul-dark text-ghoul-white shadow-sm ring-1 ring-inset ring-ghoul-gray focus:ring-2 focus:ring-inset focus:ring-ghoul-red sm:text-sm sm:leading-6 py-2.5 px-3"
+                                    placeholder="0,00"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-ghoul-muted mb-1">Tipo</label>
+                                <select
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value, category_id: '' })}
+                                    className="block w-full rounded-md border-0 bg-ghoul-dark text-ghoul-white shadow-sm ring-1 ring-inset ring-ghoul-gray focus:ring-2 focus:ring-inset focus:ring-ghoul-red sm:text-sm sm:leading-6 py-2.5 px-3"
+                                >
+                                    <option value="expense">Despesa</option>
+                                    <option value="income">Receita</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-ghoul-muted mb-1">Categoria</label>
+                                <select
+                                    value={formData.category_id}
+                                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                                    className="block w-full rounded-md border-0 bg-ghoul-dark text-ghoul-white shadow-sm ring-1 ring-inset ring-ghoul-gray focus:ring-2 focus:ring-inset focus:ring-ghoul-red sm:text-sm sm:leading-6 py-2.5 px-3"
+                                >
+                                    <option value="">Selecione uma categoria</option>
+                                    {categories
+                                        .filter(cat => cat.type === formData.type)
+                                        .map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-ghoul-muted mb-1">Data</label>
+                                <input
+                                    type="date"
+                                    required
+                                    value={formData.date}
+                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                    className="block w-full rounded-md border-0 bg-ghoul-dark text-ghoul-white shadow-sm ring-1 ring-inset ring-ghoul-gray focus:ring-2 focus:ring-inset focus:ring-ghoul-red sm:text-sm sm:leading-6 py-2.5 px-3"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 bg-ghoul-dark text-ghoul-white px-4 py-3 rounded-md hover:bg-ghoul-gray border border-transparent hover:border-ghoul-gray transition-all text-sm font-medium"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-1 bg-ghoul-red text-white px-4 py-3 rounded-md hover:bg-ghoul-blood transition-all text-sm font-bold shadow-lg shadow-ghoul-red/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? 'Salvando...' : 'Salvar'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-ghoul-muted">Descrição</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="mt-1 block w-full rounded-md border-ghoul-gray bg-ghoul-black text-ghoul-white shadow-sm focus:border-ghoul-red focus:ring-ghoul-red"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-ghoul-muted">Valor</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                required
-                                value={formData.amount}
-                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                className="mt-1 block w-full rounded-md border-ghoul-gray bg-ghoul-black text-ghoul-white shadow-sm focus:border-ghoul-red focus:ring-ghoul-red"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-ghoul-muted">Tipo</label>
-                            <select
-                                value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                className="mt-1 block w-full rounded-md border-ghoul-gray bg-ghoul-black text-ghoul-white shadow-sm focus:border-ghoul-red focus:ring-ghoul-red"
-                            >
-                                <option value="income">Receita</option>
-                                <option value="expense">Despesa</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-ghoul-muted">Categoria</label>
-                            <select
-                                value={formData.category_id}
-                                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                                className="mt-1 block w-full rounded-md border-ghoul-gray bg-ghoul-black text-ghoul-white shadow-sm focus:border-ghoul-red focus:ring-ghoul-red"
-                            >
-                                <option value="">Selecione uma categoria</option>
-                                {categories
-                                    .filter(cat => cat.type === formData.type)
-                                    .map(cat => (
-                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-ghoul-muted">Data</label>
-                            <input
-                                type="date"
-                                required
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="mt-1 block w-full rounded-md border-ghoul-gray bg-ghoul-black text-ghoul-white shadow-sm focus:border-ghoul-red focus:ring-ghoul-red"
-                            />
-                        </div>
-
-                        <div className="flex gap-3 pt-4">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="flex-1 bg-ghoul-gray text-ghoul-white px-4 py-2 rounded-md hover:bg-ghoul-gray/80"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex-1 bg-ghoul-red text-white px-4 py-2 rounded-md hover:bg-ghoul-blood disabled:opacity-50"
-                            >
-                                {loading ? 'Salvando...' : 'Salvar'}
-                            </button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>

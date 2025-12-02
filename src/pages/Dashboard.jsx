@@ -82,14 +82,14 @@ export default function Dashboard() {
         plugins: {
             legend: {
                 labels: {
-                    color: '#a1a1aa' // ghoul-muted
+                    color: '#a1a1aa'
                 }
             }
         },
         scales: {
             y: {
                 grid: {
-                    color: '#27272a' // ghoul-gray
+                    color: '#27272a'
                 },
                 ticks: {
                     color: '#a1a1aa'

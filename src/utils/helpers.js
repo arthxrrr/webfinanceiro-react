@@ -1,6 +1,4 @@
-/**
- * Funções utilitárias para formatação
- */
+/* funções utilitárias para formatação */
 
 export const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -9,13 +7,19 @@ export const formatCurrency = (value) => {
     }).format(value)
 }
 
-export const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('pt-BR')
+export const formatDate = (dateString) => {
+    if (!dateString) return ''
+
+    const [year, month, day] = dateString.split('-')
+    return `${day}/${month}/${year}`
 }
 
-/**
- * Funções utilitárias para cálculos de transações
- */
+export const formatDateForInput = (date) => {
+    if (!date) return ''
+    return new Date(date).toLocaleDateString('en-CA') // YYYY-MM-DD
+}
+
+/* funções utilitárias para cálculos de transações */
 
 export const calculateIncome = (transactions) => {
     return transactions

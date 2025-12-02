@@ -12,7 +12,6 @@ body {
   color: #f4f4f5;
 }
 
-/* Scrollbar customizada */
 ::-webkit-scrollbar {
   width: 8px;
 }

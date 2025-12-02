@@ -22,19 +22,19 @@ export default function Register() {
         try {
             const { data } = await signUp(email, password, fullName);
 
-            // Verifica se precisa confirmar email
+            // verifica se precisa confirmar email
             if (data?.user?.identities?.length === 0) {
                 setError("Este email já está cadastrado.");
                 setLoading(false);
                 return;
             }
 
-            // Mostra mensagem de sucesso
+            // mostra mensagem de sucesso
             setSuccess(true);
             setLoading(false);
         } catch (err) {
             console.error(err);
-            // Traduzindo mensagens comuns do Supabase
+
             if (err.message.includes("already registered")) {
                 setError("Este email já está em uso.");
             } else if (err.message.includes("Password should be at least")) {
@@ -46,7 +46,7 @@ export default function Register() {
         }
     }
 
-    // Tela de sucesso
+    // tela de sucesso
     if (success) {
         return (
             <div className="min-h-screen bg-ghoul-black flex flex-col justify-center py-12 sm:px-6 lg:px-8">

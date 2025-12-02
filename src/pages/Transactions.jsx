@@ -1,61 +1,24 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import Layout from '../components/Layout'
 import TransactionForm from '../components/Transactions/TransactionForm'
 import { Plus, Pencil, Trash2, Filter } from 'lucide-react'
+import { useTransactions } from '../utils/hooks'
+import { formatCurrency, formatDate } from '../utils/helpers'
 
 export default function Transactions() {
-    const [transactions, setTransactions] = useState([])
-    const [loading, setLoading] = useState(true)
+    const { user } = useAuth()
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [editingTransaction, setEditingTransaction] = useState(null)
     const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7))
 
-    useEffect(() => {
-        fetchTransactions()
-    }, [filterDate])
-
-    const fetchTransactions = async () => {
-        try {
-            setLoading(true)
-            const [year, month] = filterDate.split('-')
-            const startDate = `${year}-${month}-01`
-            const endDate = new Date(year, month, 0).toISOString().split('T')[0]
-
-            const { data, error } = await supabase
-                .from('transactions')
-                .select(`
-          *,
-          categories (name)
-        `)
-                .gte('date', startDate)
-                .lte('date', endDate)
-                .order('date', { ascending: false })
-
-            if (error) throw error
-            setTransactions(data)
-        } catch (error) {
-            console.error('Erro ao buscar transações:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
+    const { transactions, loading, fetchTransactions, deleteTransaction } = useTransactions(user, filterDate)
 
     const handleDelete = async (id) => {
         if (!confirm('Tem certeza que deseja excluir esta transação?')) return
 
-        try {
-            const { error } = await supabase
-                .from('transactions')
-                .delete()
-                .eq('id', id)
-
-            if (error) throw error
-            fetchTransactions()
-        } catch (error) {
-            console.error('Error deleting transaction:', error)
-            alert('Erro ao excluir')
-        }
+        const success = await deleteTransaction(id)
+        if (!success) alert('Erro ao excluir')
     }
 
     const handleEdit = (transaction) => {
@@ -140,15 +103,15 @@ export default function Transactions() {
                                 transactions.map((transaction) => (
                                     <tr key={transaction.id} className="hover:bg-ghoul-dark">
                                         <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm text-ghoul-white">
-                                            {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                                            {formatDate(transaction.date)}
                                         </td>
                                         <td className="px-3 py-4 text-sm text-ghoul-white">
                                             {transaction.description}
                                         </td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${transaction.type === 'income'
-                                                    ? 'bg-green-900/30 text-green-400 border border-green-700/50'
-                                                    : 'bg-red-900/30 text-red-400 border border-red-700/50'
+                                                ? 'bg-green-900/30 text-green-400 border border-green-700/50'
+                                                : 'bg-red-900/30 text-red-400 border border-red-700/50'
                                                 }`}>
                                                 {transaction.categories?.name || 'Sem categoria'}
                                             </span>
@@ -156,7 +119,7 @@ export default function Transactions() {
                                         <td className={`whitespace-nowrap px-3 py-4 text-sm font-semibold ${transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
                                             }`}>
                                             {transaction.type === 'income' ? '+' : '-'}
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(transaction.amount)}
+                                            {formatCurrency(transaction.amount)}
                                         </td>
                                         <td className="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm">
                                             <button

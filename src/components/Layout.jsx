@@ -24,7 +24,7 @@ export default function Layout({ children }) {
 
     return (
         <div className="min-h-screen bg-ghoul-black text-ghoul-white">
-            {/* Mobile menu overlay */}
+            { }
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-40 flex lg:hidden">
                     <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
@@ -81,7 +81,7 @@ export default function Layout({ children }) {
                 </div>
             )}
 
-            {/* Static sidebar for desktop */}
+            { }
             <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
                 <div className="flex-1 flex flex-col min-h-0 border-r border-ghoul-gray bg-ghoul-dark">
                     <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
@@ -126,7 +126,7 @@ export default function Layout({ children }) {
                 </div>
             </div>
 
-            {/* Main content */}
+            { }
             <div className="lg:pl-64 flex flex-col flex-1">
                 <div className="sticky top-0 z-10 lg:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 bg-ghoul-dark border-b border-ghoul-gray">
                     <button
