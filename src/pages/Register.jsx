@@ -12,7 +12,7 @@ export default function Register() {
     const [success, setSuccess] = useState(false);
 
     const navigate = useNavigate();
-    const { signUp } = useAuth();
+    const { signUp, signInAsDemo } = useAuth();
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -44,6 +44,21 @@ export default function Register() {
             }
             setLoading(false);
         }
+    }
+
+    async function handleDemoLogin() {
+        setError("");
+        setLoading(true);
+
+        try {
+            await signInAsDemo();
+            navigate("/");
+        } catch (err) {
+            setError("Falha ao fazer login demo. Tente novamente.");
+            console.error(err);
+        }
+
+        setLoading(false);
     }
 
     // tela de sucesso
@@ -157,6 +172,16 @@ export default function Register() {
                             {loading ? "Criando conta..." : "Criar conta"}
                         </button>
                     </form>
+
+                    <div className="mt-6">
+                        <button
+                            onClick={handleDemoLogin}
+                            disabled={loading}
+                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors"
+                        >
+                            {loading ? 'Carregando...' : 'Acesso Demo'}
+                        </button>
+                    </div>
 
                     <div className="mt-6">
                         <Link

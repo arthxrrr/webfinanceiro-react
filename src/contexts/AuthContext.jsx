@@ -1,59 +1,21 @@
-import { useState, useEffect, createContext, useContext } from 'react'
-import { supabase } from '../lib/supabase'
+import { createContext, useContext } from 'react';
+import { useAuth } from '../hooks/useAuth';
 
-const AuthContext = createContext({})
+const AuthContext = createContext({});
 
-export const useAuth = () => useContext(AuthContext)
+/**
+ * @returns {Object} 
+ */
+export const useAuthContext = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null)
-            setLoading(false)
-        })
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null)
-            setLoading(false)
-        })
-
-        return () => subscription.unsubscribe()
-    }, [])
-
-    const signUp = async (email, password, fullName) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    full_name: fullName,
-                },
-            },
-        })
-        if (error) throw error
-        return data
-    }
-
-    const signIn = async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
-        if (error) throw error
-        return data
-    }
-
-    const signOut = async () => {
-        const { error } = await supabase.auth.signOut()
-        if (error) throw error
-    }
+    const auth = useAuth();
 
     return (
-        <AuthContext.Provider value={{ user, signUp, signIn, signOut, loading }}>
-            {!loading && children}
+        <AuthContext.Provider value={auth}>
+            {!auth.loading && children}
         </AuthContext.Provider>
-    )
-}
+    );
+};
+
+export { useAuthContext as useAuth };

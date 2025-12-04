@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/Layout'
 import SummaryCard from '../components/Dashboard/SummaryCard'
+import { formatDate } from '../utils/formatters'
 import { Bar } from 'react-chartjs-2'
 import {
     Chart as ChartJS,
@@ -70,7 +71,7 @@ export default function Dashboard() {
             {
                 label: 'Total',
                 data: [summary.income, summary.expense],
-                backgroundColor: ['rgba(34, 197, 94, 0.6)', 'rgba(220, 38, 38, 0.8)'], // Green and Red (Blood)
+                backgroundColor: ['rgba(34, 197, 94, 0.6)', 'rgba(220, 38, 38, 0.8)'],
                 borderColor: ['rgb(34, 197, 94)', 'rgb(220, 38, 38)'],
                 borderWidth: 1,
             },
@@ -136,7 +137,7 @@ export default function Dashboard() {
                                                 {transaction.description}
                                             </p>
                                             <p className="text-sm text-ghoul-muted truncate">
-                                                {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                                                {formatDate(transaction.date)}
                                             </p>
                                         </div>
                                         <div className={`inline-flex items-center text-base font-semibold ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'

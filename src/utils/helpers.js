@@ -16,7 +16,7 @@ export const formatDate = (dateString) => {
 
 export const formatDateForInput = (date) => {
     if (!date) return ''
-    return new Date(date).toLocaleDateString('en-CA') // YYYY-MM-DD
+    return new Date(date).toLocaleDateString('en-CA')
 }
 
 /* funções utilitárias para cálculos de transações */

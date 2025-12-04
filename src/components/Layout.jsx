@@ -66,7 +66,7 @@ export default function Layout({ children }) {
                             <div className="flex-shrink-0 group block w-full">
                                 <div className="flex items-center">
                                     <div className="ml-3">
-                                        <p className="text-sm font-medium text-ghoul-white">{user?.email}</p>
+                                        <p className="text-sm font-medium text-ghoul-white">{user?.user_metadata?.full_name || user?.email}</p>
                                         <button
                                             onClick={signOut}
                                             className="text-xs font-medium text-ghoul-muted group-hover:text-ghoul-red flex items-center mt-1 transition-colors"
@@ -112,7 +112,7 @@ export default function Layout({ children }) {
                         <div className="flex-shrink-0 w-full group block">
                             <div className="flex items-center">
                                 <div className="ml-3">
-                                    <p className="text-sm font-medium text-ghoul-white truncate w-48">{user?.email}</p>
+                                    <p className="text-sm font-medium text-ghoul-white truncate w-48">{user?.user_metadata?.full_name || user?.email}</p>
                                     <button
                                         onClick={signOut}
                                         className="text-xs font-medium text-ghoul-muted group-hover:text-ghoul-red flex items-center mt-1 transition-colors"

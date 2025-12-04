@@ -36,9 +36,16 @@ export const api = {
                     .eq('id', transaction.id)
                 if (error) throw error
             } else {
+                const insertPayload = { ...payload }
+                delete insertPayload.id
+
+                if (!insertPayload.id) {
+                    insertPayload.id = crypto.randomUUID()
+                }
+
                 const { error } = await supabase
                     .from('transactions')
-                    .insert([payload])
+                    .insert([insertPayload])
                 if (error) throw error
             }
         }
